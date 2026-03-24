@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Summer Fit">
+<meta name="theme-color" content="#0a0a0a">
+<title>Summer Fit</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #FF2D2D;
+  --green-dim: #8B1A1A;
+  --bg: #1A0A0A;
+  --surface: #2A1010;
+  --surface2: #3A1818;
+  --border: #4A2020;
+  --text: #F5F0EE;
+  --muted: #8A6060;
+  --accent2: #FFFFFF;
+  --amber: #FF6B6B;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; height:100%; overflow:hidden; } body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.4; }
+#app { display:flex; flex-direction:column; height:100dvh; max-width:430px; margin:0 auto; }
+.status-pad { height:var(--safe-top); background:var(--bg); flex-shrink:0; }
+.topbar { padding:12px 20px 10px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; }
+.topbar h1 { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:1px; color:var(--green); line-height:1; }
+.topbar p { font-size:12px; color:var(--muted); margin-top:1px; }
+.week-pill { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:5px 12px; font-size:12px; color:var(--muted); }
+.day-tabs-wrap { padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.day-tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.day-tabs::-webkit-scrollbar { display:none; }
+.day-tab { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:var(--surface); min-width:46px; }
+.day-tab.active { background:var(--green); border-color:var(--green); }
+.day-tab-name { font-size:11px; font-weight:500; color:var(--muted); }
+.day-tab.active .day-tab-name { color:#000; }
+.day-tab-dot { width:5px; height:5px; border-radius:50%; background:var(--border); }
+.day-tab.done .day-tab-dot { background:var(--green); }
+.day-tab.active .day-tab-dot { background:rgba(0,0,0,0.3); }
+.score-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.score-card { background:var(--surface); border-radius:10px; padding:8px 10px; }
+.score-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; display:block; }
+.score-val { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.5px; color:var(--text); line-height:1; display:block; }
+.score-val.green { color:#FF2D2D; }
+.main-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px; padding-bottom:calc(var(--safe-bottom) + 16px); }
+.win-bar { border-radius:12px; padding:12px 16px; margin-bottom:12px; }
+.win-bar.elite { background:rgba(255,45,45,0.15); border:1px solid rgba(255,45,45,0.4); }
+.win-bar.good { background:rgba(255,45,45,0.08); border:1px solid rgba(255,45,45,0.2); }
+.win-bar.going { background:var(--surface2); border:1px solid var(--border); }
+.win-title { font-size:14px; font-weight:500; }
+.win-title.green { color:#FF2D2D; }
+.win-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.prog-wrap { height:4px; background:var(--border); border-radius:2px; margin-bottom:14px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,#FF2D2D,#FF6B6B); border-radius:2px; transition:width 0.4s ease; }
+.section { margin-bottom:12px; }
+.section-label { font-size:11px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; padding-left:2px; }
+.check-list { display:flex; flex-direction:column; gap:1px; }
+.check-item { display:flex; align-items:center; gap:12px; background:var(--surface); padding:13px 14px; cursor:pointer; }
+.check-item:first-child { border-radius:12px 12px 0 0; }
+.check-item:last-child { border-radius:0 0 12px 12px; }
+.check-item:only-child { border-radius:12px; }
+.check-item:active { background:var(--surface2); }
+.checkbox { width:24px; height:24px; min-width:24px; border-radius:7px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.checkbox.done { background:var(--green); border-color:var(--green); }
+.chk { display:none; }
+.checkbox.done .chk { display:block; }
+.check-body { flex:1; }
+.check-text { font-size:15px; color:var(--text); }
+.check-text.done { color:var(--muted); text-decoration:line-through; }
+.check-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.workout-card { background:var(--surface); border-radius:12px; padding:14px; }
+.workout-header { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#FFFFFF; margin-bottom:10px; }
+.workout-items { display:flex; flex-direction:column; gap:7px; }
+.workout-item { display:flex; align-items:center; gap:9px; font-size:14px; color:var(--muted); }
+.bullet { width:5px; height:5px; min-width:5px; border-radius:50%; background:#FFFFFF; opacity:0.4; }
+.weekly-items { display:flex; flex-direction:column; gap:1px; }
+.weekly-item { display:flex; align-items:center; justify-content:space-between; background:var(--surface); padding:12px 14px; cursor:pointer; }
+.weekly-item:first-child { border-radius:12px 12px 0 0; }
+.weekly-item:last-child { border-radius:0 0 12px 12px; }
+.weekly-item:active { background:var(--surface2); }
+.wi-text { font-size:14px; color:var(--text); }
+.wi-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.check-circle { width:22px; height:22px; min-width:22px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.check-circle.done { background:var(--green); border-color:var(--green); }
+.check-circle .chk { display:none; }
+.check-circle.done .chk { display:block; }
+.mindset-card { background:var(--surface); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+.mindset-rule { display:flex; gap:10px; font-size:14px; color:var(--muted); line-height:1.5; }
+.mnum { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#FF2D2D; min-width:16px; line-height:1.3; }
+.bottom-nav { display:flex; border-top:1px solid var(--border); padding-bottom:var(--safe-bottom); background:var(--bg); flex-shrink:0; }
+.nav-tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 8px; cursor:pointer; opacity:0.4; border:none; background:none; color:var(--text); }
+.nav-tab.active { opacity:1; }
+.nav-tab svg { width:22px; height:22px; }
+.nav-tab-label { font-size:10px; font-weight:500; font-family:'DM Sans',sans-serif; }
+.nav-tab.active .nav-tab-label { color:#FF2D2D; }
+.view { display:none; }
+.view.active { display:block; }
+.install-banner { position:fixed; bottom:0; left:0; right:0; background:var(--surface2); border-top:1px solid var(--border); padding:14px 20px; padding-bottom:calc(var(--safe-bottom) + 14px); z-index:100; display:flex; align-items:center; gap:12px; }
+.install-text { flex:1; font-size:13px; color:var(--muted); line-height:1.4; }
+.install-text strong { color:var(--text); }
+.install-close { font-size:20px; background:none; border:none; cursor:pointer; color:var(--text); padding:4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="status-pad"></div>
+  <div class="topbar">
+    <div>
+      <h1>Summer Fit</h1>
+      <p id="today-label">Today</p>
+    </div>
+    <div class="week-pill" id="week-badge">Week 1 of 10</div>
+  </div>
+  <div class="day-tabs-wrap">
+    <div class="day-tabs" id="day-tabs"></div>
+  </div>
+  <div class="score-row">
+    <div class="score-card"><span class="score-label">Today</span><span class="score-val green" id="score-val">0/5</span></div>
+    <div class="score-card"><span class="score-label">Streak</span><span class="score-val" id="streak-val">0</span></div>
+    <div class="score-card"><span class="score-label">Week</span><span class="score-val" id="week-score">0/7</span></div>
+    <div class="score-card"><span class="score-label">Plan</span><span class="score-val" id="prog-val">0%</span></div>
+  </div>
+  <div class="main-scroll">
+
+    <div class="view active" id="view-today">
+      <div id="win-status"></div>
+      <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="section">
+        <div class="section-label">Daily goals</div>
+        <div class="check-list" id="checklist"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Today's workout</div>
+        <div class="workout-card" id="workout-card"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-weekly">
+      <div class="section">
+        <div class="section-label">Weekly tracking</div>
+        <div class="weekly-items" id="weekly-list"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Weekly schedule</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Mon</strong> — Push (chest focus)</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Tue</strong> — Run / class</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Wed</strong> — Pull</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Thu</strong> — Run / yoga</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Fri</strong> — Legs</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Sat</strong> — Optional</span></div>
+            <div class="workout-item"><span class="bullet"></span><span><strong style="color:var(--text)">Sun</strong> — Rest</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Running plan</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span>Run 1: Easy 1.5–2 miles</div>
+            <div class="workout-item"><span class="bullet"></span>Run 2: Easy 1.5–2.5 miles</div>
+            <div class="workout-item"><span class="bullet"></span>Run 3: Long run (+0.5 mi each week)</div>
+            <div class="workout-item"><span class="bullet"></span>No back-to-back run days</div>
+            <div class="workout-item"><span class="bullet"></span>Easy conversational pace only</div>
+            <div class="workout-item"><span class="bullet"></span>Stop if Achilles pain</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-nutrition">
+      <div class="section">
+        <div class="section-label">Daily targets</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span>Calories: 2300–2500</div>
+            <div class="workout-item"><span class="bullet"></span>Protein: ~180g</div>
+            <div class="workout-item"><span class="bullet"></span>Protein in every meal</div>
+            <div class="workout-item"><span class="bullet"></span>2 clean meals per day</div>
+            <div class="workout-item"><span class="bullet"></span>Limit late night snacking</div>
+            <div class="workout-item"><span class="bullet"></span>Alcohol 1–2x per week max</div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Pre-run routine</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span>15 calf raises</div>
+            <div class="workout-item"><span class="bullet"></span>10 leg swings each side</div>
+            <div class="workout-item"><span class="bullet"></span>2–3 min easy walk</div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Post-run routine</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span>Eccentric calf raises 3x10 each side</div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Track in</div>
+        <div class="check-list">
+          <div class="check-item" style="cursor:default;border-radius:12px 12px 0 0;"><div class="check-body"><div class="check-text">MacrosFirst</div><div class="check-sub">Food and calorie tracking</div></div></div>
+          <div class="check-item" style="cursor:default;border-radius:0 0 12px 12px;"><div class="check-body"><div class="check-text">Hevy</div><div class="check-sub">Workout logging</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-mindset">
+      <div class="section">
+        <div class="section-label">Mindset rules</div>
+        <div class="mindset-card" id="mindset-card"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Win the day</div>
+        <div class="workout-card">
+          <div class="workout-items">
+            <div class="workout-item"><span class="bullet"></span>3–4 / 5 = Good day</div>
+            <div class="workout-item"><span class="bullet"></span>5 / 5 = Elite day</div>
+            <div class="workout-item"><span class="bullet"></span>Miss a day? Back tomorrow — no guilt</div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Reset</div>
+        <div class="workout-card">
+          <button onclick="confirmReset()" style="background:none;border:1px solid #c0392b;color:#c0392b;border-radius:8px;padding:10px 16px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;">Reset all data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab active" onclick="switchView('today',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0EE" stroke-width="1.5" stroke-linejoin="round"><path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z"/></svg>
+      <span class="nav-tab-label">Today</span>
+    </button>
+    <button class="nav-tab" onclick="switchView('weekly',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0EE" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9H21M8 2V6M16 2V6"/></svg>
+      <span class="nav-tab-label">Weekly</span>
+    </button>
+    <button class="nav-tab" onclick="switchView('nutrition',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0EE" stroke-width="1.5" stroke-linecap="round"><path d="M12 2C8 2 5 6 5 10C5 14 8 17 12 17C16 17 19 14 19 10C19 6 16 2 12 2Z"/><path d="M12 17V22M9 22H15"/></svg>
+      <span class="nav-tab-label">Nutrition</span>
+    </button>
+    <button class="nav-tab" onclick="switchView('mindset',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0EE" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9C9 7.34 10.34 6 12 6C13.66 6 15 7.34 15 9C15 10.66 13.66 12 12 12V14M12 17V17.5"/></svg>
+      <span class="nav-tab-label">Mindset</span>
+    </button>
+  </div>
+</div>
+
+<script>
+var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+var CHECKS = [
+  {id:'protein', text:'Hit protein target', sub:'~180g — protein every meal'},
+  {id:'calories', text:'Stay in calorie range', sub:'~2300–2500 cal'},
+  {id:'workout', text:'Workout or run', sub:'See workout below'},
+  {id:'steps', text:'8–10k steps', sub:'Move throughout the day'},
+  {id:'journal', text:'Journal or mental reset', sub:'5 minutes — reflect and breathe'}
+];
+
+var WEEKLY = [
+  {id:'weighin', text:'Weigh in (3x this week)', sub:'Morning, fasted'},
+  {id:'progpic', text:'Progress photo', sub:'1x per week'},
+  {id:'logworkout', text:'Log workouts in Hevy', sub:'Every session'},
+  {id:'trackfood', text:'Track food in MacrosFirst', sub:'Daily'}
+];
+
+var MINDSET = [
+  'This plan works if you show up consistently. Perfection is the enemy.',
+  'You are leaning out AND building muscle. Trust the process — it takes time.',
+  'Run easy. Always. If you cannot hold a conversation, you are going too fast.',
+  'Missing one day means nothing. Missing three in a row means check in with yourself.',
+  'Protein first, every meal. Non-negotiable.',
+  'Sleep is training. 7–8 hours is part of the plan.',
+  'Confidence is built rep by rep, mile by mile. You are already doing it.'
+];
+
+var WORKOUTS = {
+  1:{label:'Push day — chest focus', items:['Incline DB press 4x8–12','Flat press 3x8–12','Lateral raises 4x12–15','Triceps pushdowns 3x10–12']},
+  2:{label:'Run / class', items:['Easy run 1.5–2 miles','Pre: 15 calf raises + leg swings','Post: eccentric calf raises 3x10']},
+  3:{label:'Pull day', items:['Lat pulldown / pull-ups','Seated row','Face pulls','Biceps curls']},
+  4:{label:'Run / yoga', items:['Easy run 1.5–2.5 miles','Pre: 15 calf raises + leg swings','Post: eccentric calf raises 3x10']},
+  5:{label:'Legs', items:['Squat or leg press','Romanian deadlifts','Lunges','Core work']},
+  6:{label:'Optional — run, class, or upper pump', items:['Your call — keep it fun','Low pressure, high enjoyment']},
+  0:{label:'Rest day', items:['Full recovery','Light walk is fine','Prep meals for the week']}
+};
+
+var now = new Date();
+var todayKey = now.toISOString().split('T')[0];
+var dow = now.getDay();
+
+var state = {};
+try { var s = localStorage.getItem('sf2'); if(s) state = JSON.parse(s); } catch(e) {}
+
+function save() { try { localStorage.setItem('sf2', JSON.stringify(state)); } catch(e) {} }
+
+function getDay(k) { return state[k] || {}; }
+function countDone(k) { var s=getDay(k); return CHECKS.filter(function(c){return s[c.id];}).length; }
+
+function calcStreak() {
+  var streak=0, d=new Date(now);
+  d.setDate(d.getDate()-1);
+  for(var i=0;i<100;i++) {
+    var k=d.toISOString().split('T')[0];
+    if(countDone(k)>=3){streak++;d.setDate(d.getDate()-1);}else break;
+  }
+  return streak;
+}
+
+function weekKey() {
+  var d=new Date(now); d.setDate(d.getDate()-dow);
+  return 'wk_'+d.toISOString().split('T')[0];
+}
+
+function checkSVG() { return '<svg class="chk" width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+
+function renderTabs() {
+  var el=document.getElementById('day-tabs'); el.innerHTML='';
+  for(var i=0;i<7;i++) {
+    var d=new Date(now); d.setDate(d.getDate()-dow+i);
+    var k=d.toISOString().split('T')[0];
+    var done=countDone(k)>0;
+    var isToday=k===todayKey;
+    var div=document.createElement('div');
+    div.className='day-tab'+(isToday?' active':'')+(done?' done':'');
+    div.innerHTML='<span class="day-tab-name">'+DAYS[i]+'</span><span class="day-tab-dot"></span>';
+    el.appendChild(div);
+  }
+}
+
+function renderChecklist() {
+  var s=getDay(todayKey);
+  var el=document.getElementById('checklist'); el.innerHTML='';
+  CHECKS.forEach(function(c) {
+    var done=!!s[c.id];
+    var item=document.createElement('div');
+    item.className='check-item';
+    item.innerHTML='<div class="checkbox'+(done?' done':'')+'">'+checkSVG()+'</div><div class="check-body"><div class="check-text'+(done?' done':'')+'">'+c.text+'</div><div class="check-sub">'+c.sub+'</div></div>';
+    (function(cid){
+      item.addEventListener('click', function(){
+        if(!state[todayKey]) state[todayKey]={};
+        state[todayKey][cid]=!state[todayKey][cid];
+        save(); render();
+      });
+    })(c.id);
+    el.appendChild(item);
+  });
+}
+
+function renderWorkout() {
+  var w=WORKOUTS[dow];
+  document.getElementById('workout-card').innerHTML='<div class="workout-header">'+w.label+'</div><div class="workout-items">'+w.items.map(function(i){return '<div class="workout-item"><span class="bullet"></span>'+i+'</div>';}).join('')+'</div>';
+}
+
+function renderWin() {
+  var done=countDone(todayKey);
+  var el=document.getElementById('win-status');
+  if(done===5) el.innerHTML='<div class="win-bar elite"><div class="win-title green">★ Elite day</div><div class="win-sub">All 5 complete. You are putting in the work.</div></div>';
+  else if(done>=3) el.innerHTML='<div class="win-bar good"><div class="win-title green">Good day — '+done+'/5</div><div class="win-sub">Solid. Hit one more to go elite.</div></div>';
+  else if(done>0) el.innerHTML='<div class="win-bar going"><div class="win-title">'+done+'/5 done</div><div class="win-sub">3+ makes it a good day. Keep going.</div></div>';
+  else el.innerHTML='';
+  document.getElementById('prog-fill').style.width=(done/5*100)+'%';
+}
+
+function renderMetrics() {
+  var done=countDone(todayKey);
+  document.getElementById('today-label').textContent=FULL[dow]+', '+now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('score-val').textContent=done+'/5';
+  document.getElementById('streak-val').textContent=calcStreak();
+  var wdays=[];
+  for(var i=0;i<7;i++){var d=new Date(now);d.setDate(d.getDate()-dow+i);wdays.push(d.toISOString().split('T')[0]);}
+  var logged=wdays.filter(function(k){return countDone(k)>=3;}).length;
+  document.getElementById('week-score').textContent=logged+'/7';
+  document.getElementById('prog-val').textContent='0%';
+}
+
+function renderWeekly() {
+  var ws=state[weekKey()]||{};
+  var el=document.getElementById('weekly-list'); el.innerHTML='';
+  WEEKLY.forEach(function(c) {
+    var done=!!ws[c.id];
+    var item=document.createElement('div');
+    item.className='weekly-item';
+    item.innerHTML='<div><div class="wi-text">'+c.text+'</div><div class="wi-sub">'+c.sub+'</div></div><div class="check-circle'+(done?' done':'')+'">'+checkSVG()+'</div>';
+    (function(cid){
+      item.addEventListener('click',function(){
+        var wk=weekKey();
+        if(!state[wk]) state[wk]={};
+        state[wk][cid]=!state[wk][cid];
+        save(); renderWeekly();
+      });
+    })(c.id);
+    el.appendChild(item);
+  });
+}
+
+function renderMindset() {
+  document.getElementById('mindset-card').innerHTML=MINDSET.map(function(r,i){
+    return '<div class="mindset-rule"><span class="mnum">'+(i+1)+'</span><span>'+r+'</span></div>';
+  }).join('');
+}
+
+function render() {
+  renderTabs(); renderChecklist(); renderWorkout(); renderWin(); renderMetrics(); renderWeekly(); renderMindset();
+}
+
+function switchView(id, tab) {
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('view-'+id).classList.add('active');
+  tab.classList.add('active');
+  document.querySelector('.main-scroll').scrollTop=0;
+}
+
+function confirmReset() {
+  if(confirm('Reset all data? This cannot be undone.')) {
+    try{localStorage.removeItem('sf2');}catch(e){}
+    state={};
+    render();
+  }
+}
+
+var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+var isStandalone=window.navigator.standalone;
+if(isIOS && !isStandalone && !localStorage.getItem('sf_banner')) {
+  var b=document.createElement('div');
+  b.className='install-banner';
+  b.innerHTML='<span style="font-size:18px">&#x2B06;</span><div class="install-text"><strong>Add to Home Screen</strong> — tap the share icon in Safari, then "Add to Home Screen" for the full app.</div><button class="install-close" onclick="this.parentElement.remove();localStorage.setItem(\'sf_banner\',\'1\')">&#x2715;</button>';
+  document.body.appendChild(b);
+}
+
+if('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(function(){}); }
+
+render();
+</script>
+</body>
+</html>
